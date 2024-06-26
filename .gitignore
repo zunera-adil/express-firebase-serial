@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Firebase Admin SDK JSON file
+ubi-lab-e0778-firebase-adminsdk-8ycio-3a7627ed09.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
