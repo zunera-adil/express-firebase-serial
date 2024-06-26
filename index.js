@@ -3,7 +3,7 @@ const { SerialPort } = require("serialport");
 const { ReadlineParser } = require("@serialport/parser-readline");
 const admin = require("firebase-admin");
 const serviceAccount = require("./ubi-lab-e0778-firebase-adminsdk-8ycio-3a7627ed09.json"); // Path to your Firebase Admin SDK JSON
-
+var morgan = require("morgan");
 // Initialize Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -49,6 +49,7 @@ serialPort.on("error", (err) => {
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(morgan("tiny"));
 
 // Route to get the latest sensor data
 app.get("/api/sensorData", async (req, res) => {
