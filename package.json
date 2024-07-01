@@ -1,13 +1,13 @@
 {
   "name": "ubi-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "This project connects a soil moisture sensor to an Arduino, reads data from the sensor, and sends it to a Firebase Firestore database using an Express server. The server provides an API to retrieve the latest sensor data.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Umer",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.2",
@@ -22,5 +22,9 @@
   },
   "devDependencies": {
     "@babel/helper-compilation-targets": "^7.24.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "express-firebase-serial"
   }
 }
