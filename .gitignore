@@ -11,3 +11,4 @@ npm-debug.log*
 
 # Environment variables
 .env
+google-service.json

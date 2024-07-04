@@ -2,7 +2,7 @@ const express = require("express");
 const { SerialPort } = require("serialport");
 const { ReadlineParser } = require("@serialport/parser-readline");
 const admin = require("firebase-admin");
-const serviceAccount = require("./ubi-lab-e0778-firebase-adminsdk-8ycio-3a7627ed09.json"); // Path to your Firebase Admin SDK JSON
+const serviceAccount = require("./google-service"); // Path to your Firebase Admin SDK JSON
 var morgan = require("morgan");
 // Initialize Firebase Admin SDK
 admin.initializeApp({
@@ -17,25 +17,42 @@ const app = express();
 const port = 3000; // Choose your desired port number
 
 // Serial Port configuration
-const serialPort = new SerialPort({ path: "COM3", baudRate: 115200 });
+const serialPort = new SerialPort({ path: "/dev/tty.usbserial-14130", baudRate: 115200 });
 const parser = serialPort.pipe(new ReadlineParser({ delimiter: "\r\n" }));
+
+const sensorId = "latest"
+
+const minOriginal = 400
+const maxOriginal = 4050
+const minScaled = 0
+const maxScaled = 100
+
+function scaleValue(originalValue) {
+  // Scale the original value to a 0-100 range
+  const scaledValue =
+     maxScaled -
+     ((originalValue - minOriginal) / (maxOriginal - minOriginal)) * maxScaled
+
+  return scaledValue
+}
 
 // Handle incoming data from Arduino
 parser.on("data", async (data) => {
   const trimmedData = data.trim();
   // console.log("Received from Arduino:", trimmedData);
   const sensorValue = parseInt((trimmedData.match(/\d+/) || [NaN])[0], 10);
-  // console.log(sensorValue);
+  
 
   // Filter to skip unwanted strings and process only numeric values
   if (!isNaN(sensorValue) && sensorValue !== "") {
+    const scaledValue = scaleValue(sensorValue)
     try {
-      const docRef = db.collection("sensorData").doc("latest"); // Use a fixed document ID to update the same document
+      const docRef = db.collection("sensorData").doc(sensorId); // Use a fixed document ID to update the same document
       await docRef.set({
-        value: sensorValue,
+        value: scaledValue,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
-      console.log("Sensor data updated in Firestore");
+      console.log("Sensor data updated in Firestore, sensor-id: ", sensorId, " scaled value: ", scaledValue, " sensor value: ", sensorValue);
     } catch (error) {
       console.error("Error saving to Firestore:", error);
     }
