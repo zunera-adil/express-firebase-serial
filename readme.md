@@ -1,82 +1,115 @@
-# Soil Moisture Sensor with Firebase and Express
+# Moisture Sensor Monitoring with Firebase Push Notifications
 
-This project connects a soil moisture sensor to an Arduino, reads data from the sensor, and sends it to a Firebase Firestore database using an Express server. The server provides an API to retrieve the latest sensor data.
+This project monitors soil moisture levels using an ESP32 connected to a moisture sensor. The sensor data is read by an Express server and stored in Firebase Firestore. If the moisture level falls below a defined threshold, a push notification is sent to the user.
 
 ## Table of Contents
 
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Running the Application](#running-the-application)
+- [Usage](#usage)
 - [API Endpoints](#api-endpoints)
 - [License](#license)
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+Before you begin, ensure you have met the following requirements:
 
 - Node.js and npm installed
-- Arduino with a soil moisture sensor connected
-- CH340 driver installed (if your Arduino uses the CH340 USB-to-serial chip). You can download and install the driver from [here](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all).
-- Firebase project setup with Firestore enabled
-- Firebase Admin SDK JSON file for your Firebase project
+- Firebase account with a project set up
+- Firebase Admin SDK JSON file
+- ESP32 with a moisture sensor connected
 
-### Steps
+## Installation
 
-1. Clone this repository:
+1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/your-repo/soil-moisture-sensor.git
-   cd soil-moisture-sensor
-   ```
+```bash
+git clone https://github.com/umerrauf6/express-firebase-serial
+cd express-firebase-serial
+```
 
 2. Install the dependencies:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-3. Place your Firebase Admin SDK JSON file in the project directory and update the path in the code:
-   ```javascript
-   const serviceAccount = require("./path-to-your-firebase-adminsdk.json");
-   ```
+3. Create a `.env` file to store environment variables (optional):
+
+```bash
+touch .env
+```
+
+4. Add the following content to `.env` (if using environment variables):
+
+```plaintext
+FIREBASE_ADMIN_SDK_PATH=./path-to-your-firebase-adminsdk.json
+SERIAL_PORT=/dev/tty.usbserial-14130
+BAUD_RATE=115200
+```
 
 ## Configuration
 
-### Firebase
+1. Place your Firebase Admin SDK JSON file in the project directory and update the path in the code:
 
-Make sure you have a Firebase project set up with Firestore enabled. Download the Admin SDK JSON file from your Firebase project settings and place it in the project directory.
+```javascript
+const serviceAccount = require("./google-service.json"); // Update the path as needed
+```
 
-### Arduino
+2. Update the serial port path and baud rate in the code if necessary:
 
-Ensure that your Arduino is connected to the soil moisture sensor and that it is sending data to the specified serial port (e.g., `COM3`) at the baud rate of `115200`.
+```javascript
+const serialPort = new SerialPort({
+  path: "/dev/tty.usbserial-14130",
+  baudRate: 115200,
+});
+```
 
-## Running the Application
+3. Update the Firebase configuration in your client application (web, Android, or iOS) with your project's details.
 
-1. Connect your Arduino to your computer.
+## Usage
 
-2. Start the Express server:
+1. Start the Express server:
 
-   ```bash
-   nodemon start
-   ```
+```bash
+nodemon start
+```
 
-3. The server will be running at `http://localhost:3000`.
+2. The server will start running on `http://localhost:3000`.
+
+3. Connect your ESP32 to the moisture sensor and ensure it is correctly sending data to the serial port.
+
+4. Open your client application (web, Android, or iOS) to get the device token and send it to the server.
 
 ## API Endpoints
 
-### Get Latest Sensor Data
+### Save Device Token
 
-- **Endpoint**: `/api/sensorData`
-- **Method**: GET
-- **Description**: Retrieves the latest sensor data from Firestore.
-- **Response**:
+- **URL**: `/api/saveToken`
+- **Method**: `POST`
+- **Description**: Saves the device token for push notifications.
+- **Body**:
   ```json
   {
-    "value": 1217,
-    "timestamp": "2023-06-25T13:30:00Z"
+    "token": "device-token"
   }
   ```
 
-## License
+### Get Latest Sensor Data
 
-This project is licensed under the MIT License.
+- **URL**: `/api/sensorData`
+- **Method**: `GET`
+- **Description**: Retrieves the latest sensor data from Firestore.
+
+### Example Route
+
+- **URL**: `/`
+- **Method**: `GET`
+- **Description**: Example route to verify the server is running.
+
+## How It Works
+
+1. The ESP32 reads the soil moisture level and sends the data to the serial port.
+2. The Express server reads the data from the serial port, scales it to a percentage, and stores it in Firebase Firestore.
+3. If the moisture level falls below 50%, the server sends a push notification to the user's device using Firebase Cloud Messaging (FCM).
