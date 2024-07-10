@@ -58,6 +58,9 @@ const sendPushNotification = async (message, token) => {
   }
 };
 
+// Variable to track the time of the last notification
+let lastNotificationTime = 0;
+
 // Handle incoming data from Arduino
 parser.on("data", async (data) => {
   const trimmedData = data.trim();
@@ -81,14 +84,19 @@ parser.on("data", async (data) => {
         sensorValue
       );
 
-      // Send push notification if moisture level is below 50%
-      if (scaledValue < 50) {
+      // Send push notification if moisture level is below 50% and if 30 minutes have passed since the last notification
+      const currentTime = Date.now();
+      if (
+        scaledValue < 50 &&
+        currentTime - lastNotificationTime > 30 * 60 * 1000
+      ) {
         const tokenDoc = await db.collection("tokens").doc("deviceToken").get();
         const token = tokenDoc.data().token;
         await sendPushNotification(
           `Moisture level is down to ${scaledValue}%.`,
           token
         );
+        lastNotificationTime = currentTime; // Update the last notification time
       }
     } catch (error) {
       console.error("Error saving to Firestore:", error);
