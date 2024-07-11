@@ -19,7 +19,7 @@ const port = 3000; // Choose your desired port number
 
 // Serial Port configuration
 const serialPort = new SerialPort({
-  path: "/dev/tty.usbserial-14130",
+  path: "/dev/tty.usbserial-14140",
   baudRate: 115200,
 });
 const parser = serialPort.pipe(new ReadlineParser({ delimiter: "\r\n" }));
@@ -91,7 +91,7 @@ parser.on("data", async (data) => {
         currentTime - lastNotificationTime > 30 * 60 * 1000
       ) {
         const tokenDoc = await db.collection("tokens").doc("deviceToken").get();
-        const token = tokenDoc.data().token;
+        const token = "eu5fWO3OQnm2lZF1QdcO4X:APA91bH6rhKqLw3t18QYdZht6WHVmvmBxoJLb0SlgBeo3IW6qec_NiSgZHpWL__KHt5hPwKr0K4AlWk9RFupMnsBAB3FjBlAdyo8-hb7WHYqvkN3gUDcadkakwUG0tvw8ehP8qsWWmUo";
         await sendPushNotification(
           `Moisture level is down to ${scaledValue}%.`,
           token
