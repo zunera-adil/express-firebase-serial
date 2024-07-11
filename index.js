@@ -43,7 +43,7 @@ function scaleValue(originalValue) {
 // Function to send push notification
 const sendPushNotification = async (message, token) => {
   const notification = {
-    notification: {
+    data: {
       title: "Moisture Alert",
       body: message,
     },
