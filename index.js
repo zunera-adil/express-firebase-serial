@@ -32,7 +32,6 @@ const minScaled = 0;
 const maxScaled = 100;
 
 function scaleValue(originalValue) {
-  // Scale the original value to a 0-100 range
   const scaledValue =
     maxScaled -
     ((originalValue - minOriginal) / (maxOriginal - minOriginal)) * maxScaled;
@@ -40,11 +39,10 @@ function scaleValue(originalValue) {
   return Math.round(scaledValue); // Round to the nearest integer
 }
 
-// Function to send push notification
 const sendPushNotification = async (message, token) => {
   const notification = {
-    data: {
-      title: "Moisture Alert",
+    notification: {
+      title: "Update On Moisture Level",
       body: message,
     },
     token: token, // Use the device token
@@ -58,15 +56,13 @@ const sendPushNotification = async (message, token) => {
   }
 };
 
-// Variable to track the time of the last notification
 let lastNotificationTime = 0;
+let sendingNotification = false;
 
-// Handle incoming data from Arduino
 parser.on("data", async (data) => {
   const trimmedData = data.trim();
   const sensorValue = parseInt((trimmedData.match(/\d+/) || [NaN])[0], 10);
 
-  // Filter to skip unwanted strings and process only numeric values
   if (!isNaN(sensorValue) && sensorValue !== "") {
     const scaledValue = scaleValue(sensorValue);
     try {
@@ -84,19 +80,25 @@ parser.on("data", async (data) => {
         sensorValue
       );
 
-      // Send push notification if moisture level is below 50% and if 30 minutes have passed since the last notification
       const currentTime = Date.now();
       if (
         scaledValue < 50 &&
-        currentTime - lastNotificationTime > 30 * 60 * 1000
+        currentTime - lastNotificationTime > 30 * 60 * 1000 && !sendingNotification
       ) {
+        sendingNotification = true
         const tokenDoc = await db.collection("tokens").doc("deviceToken").get();
-        const token = "eu5fWO3OQnm2lZF1QdcO4X:APA91bH6rhKqLw3t18QYdZht6WHVmvmBxoJLb0SlgBeo3IW6qec_NiSgZHpWL__KHt5hPwKr0K4AlWk9RFupMnsBAB3FjBlAdyo8-hb7WHYqvkN3gUDcadkakwUG0tvw8ehP8qsWWmUo";
-        await sendPushNotification(
-          `Moisture level is down to ${scaledValue}%.`,
-          token
-        );
-        lastNotificationTime = currentTime; // Update the last notification time
+        if (tokenDoc.exists) {
+          const token = tokenDoc.data().token;
+          console.log("Retrieved token from Firestore: ", token);
+          await sendPushNotification(
+            `Level is down to ${scaledValue}%.`,
+            token
+          );
+          lastNotificationTime = currentTime; // Update the last notification time
+        } else {
+          console.log("No device token found in Firestore");
+        }
+        sendingNotification = false
       }
     } catch (error) {
       console.error("Error saving to Firestore:", error);
@@ -104,16 +106,13 @@ parser.on("data", async (data) => {
   }
 });
 
-// Error handling for serial port
 serialPort.on("error", (err) => {
   console.error("Error with serial port:", err.message);
 });
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 app.use(morgan("tiny"));
 
-// Route to save the device token
 app.post("/api/saveToken", async (req, res) => {
   const { token } = req.body;
   if (!token) {
@@ -128,7 +127,6 @@ app.post("/api/saveToken", async (req, res) => {
   }
 });
 
-// Route to get the latest sensor data
 app.get("/api/sensorData", async (req, res) => {
   try {
     const doc = await db.collection("sensorData").doc("latest").get();
@@ -142,12 +140,10 @@ app.get("/api/sensorData", async (req, res) => {
   }
 });
 
-// Example route to verify server is running
 app.get("/", (req, res) => {
   res.send("Hello World! This is your Express server.");
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
